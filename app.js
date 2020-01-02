@@ -2,6 +2,7 @@ var express = require('express');
 const app = express();
 var bodyParser = require('body-parser');
 var fileUpload = require('express-fileupload');
+var multer= require('multer');
 // Getting data in json format
 app.use(bodyParser.urlencoded({extended:true}));
 app.use(fileUpload());
@@ -39,6 +40,26 @@ app.post('/upload', function(req, res){
     });
     }
 });
+
+var storage =   multer.diskStorage({
+  destination: function (req, file, callback) {
+    callback(null, './public/uploadedData/');
+  },
+  filename: function (req, file, callback) {
+    callback(null, file.fieldname + '-' + Date.now());
+  }
+});
+var upload = multer({ storage : storage}).single('userPhoto');
+
+app.post('/api/photo',function(req,res){
+    upload(req,res,function(err) {
+        if(err) {
+            return res.end("Error uploading file.");
+        }
+        res.end("File is uploaded");
+    });
+});
+
 
 app.listen(3000 || process.env.PORT, function(req,res){
   console.log('Server running successfully.');
