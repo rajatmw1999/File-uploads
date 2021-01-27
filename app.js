@@ -7,8 +7,20 @@ var multer= require('multer');
 app.use(bodyParser.urlencoded({extended:true}));
 app.use(fileUpload());
 app.use(express.static("views"));
+var {v4} = require("uuid");
+
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "*"); //'Origin, X-Requested-With, Content-Type, Accept, Authorization'
+  if (req.method === "OPTIONS") {
+    res.header("Access-Control-Allow-Methods", "PUT, POST, PATCH, DELETE, GET");
+    return res.status(200).json({});
+  }
+  next();
+});
 
 app.get('/', function(req,res){
+  // console.log(v4());
   res.render('index.ejs');
 });
 
@@ -28,14 +40,17 @@ app.post('/upload', function(req, res){
     console.log(req.files.foo);
     if(req.files){
     var uploadedFile = req.files.foo;
-    uploadedFile.mv(__dirname + '/public/uploadedData/' + req.files.foo.name, function(err){
+    const name = v4() + Date.now() + '.jpg';
+    uploadedFile.mv(__dirname + '/views/' + name, function(err){
       if(err){
         console.log('Some error occured');
         console.log(err);
         res.redirect('/');
       }else{
         console.log('DONE!!!!!!!!!!!!!!!!!');
-        res.redirect('/done');
+        var url = 'https://localhost:8000/' + name;
+        // res.render('done.ejs',{url:url});
+        return res.send(name);
       }
     });
     }
@@ -43,7 +58,7 @@ app.post('/upload', function(req, res){
 
 var storage =   multer.diskStorage({
   destination: function (req, file, callback) {
-    callback(null, './public/uploadedData/');
+    callback(null, './views/');
   },
   filename: function (req, file, callback) {
     callback(null, file.fieldname + '-' + Date.now());
@@ -60,7 +75,11 @@ app.post('/api/photo',function(req,res){
     });
 });
 
+app.get('/getfile', async(req, res)=>{
+  return res.send('')
+});
 
-app.listen(3000 || process.env.PORT, function(req,res){
+
+app.listen(process.env.PORT||8000, function(req,res){
   console.log('Server running successfully.');
 });
